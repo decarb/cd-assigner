@@ -6,11 +6,11 @@ import io.circe.Decoder
   * template-specific (e.g. `className="Tank"`, `specName="Protection1"`) and must be normalized.
   */
 final case class RawSlot(
-    name: String,
-    className: String,
-    specName: String,
-    confirmed: Boolean,
-    group: Int
+  name: String,
+  className: String,
+  specName: String,
+  confirmed: Boolean,
+  group: Int
 )
 
 object RawSlot:
@@ -20,7 +20,8 @@ object RawSlot:
       className <- c.get[String]("className")
       specName  <- c.get[String]("specName")
       // Raid-Helper sends "confirmed" / "unconfirmed" as a string.
-      confirmed <- c.get[Option[String]]("isConfirmed").map(_.exists(_.equalsIgnoreCase("confirmed")))
-      group     <- c.get[Option[Int]]("groupNumber").map(_.getOrElse(0))
+      confirmed <-
+        c.get[Option[String]]("isConfirmed").map(_.exists(_.equalsIgnoreCase("confirmed")))
+      group <- c.get[Option[Int]]("groupNumber").map(_.getOrElse(0))
     yield RawSlot(name, className, specName, confirmed, group)
   }

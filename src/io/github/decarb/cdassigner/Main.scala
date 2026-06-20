@@ -12,10 +12,10 @@ import java.nio.file.{Path, Paths}
 import sttp.client4.httpclient.cats.HttpClientCatsBackend
 
 object Main
-    extends CommandIOApp(
-      name = "cd-assigner",
-      header = "Pull a Raid-Helper roster into the canonical domain model"
-    ):
+extends CommandIOApp(
+  name = "cd-assigner",
+  header = "Pull a Raid-Helper roster into the canonical domain model"
+):
 
   private val pull: Opts[IO[ExitCode]] =
     Opts.subcommand("pull", "Fetch a Raid-Helper roster (by URL or id) and serialize it to JSON") {
@@ -35,7 +35,9 @@ object Main
           RaidHelperClient(backend).fetchRaidPlan(id).flatMap { slots =>
             RosterNormalizer.normalize(slots) match
               case Left(errors) =>
-                Console[IO].errorln(s"✗ Could not normalize ${errors.size} of ${slots.size} slot(s):") *>
+                Console[IO].errorln(
+                  s"✗ Could not normalize ${errors.size} of ${slots.size} slot(s):"
+                ) *>
                   errors.traverse_(e => Console[IO].errorln(s"  - $e")) *>
                   Console[IO]
                     .errorln("Add the missing pairs to RosterNormalizer and retry.")

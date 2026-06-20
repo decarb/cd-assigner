@@ -9,11 +9,11 @@ object PlayerName:
 
 /** One canonical roster entry after Raid-Helper normalization. */
 final case class RaidMember(
-    name: PlayerName,
-    playerClass: PlayerClass,
-    spec: Spec,
-    confirmed: Boolean,
-    group: Int
+  name: PlayerName,
+  playerClass: PlayerClass,
+  spec: Spec,
+  confirmed: Boolean,
+  group: Int
 )
 
 /** A serialized roster: our own stable format, decoupled from Raid-Helper's template quirks.

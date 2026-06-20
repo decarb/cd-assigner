@@ -4,7 +4,8 @@ import io.github.decarb.cdassigner.domain.{PlayerClass, PlayerName, RaidMember, 
 import io.github.decarb.cdassigner.raidhelper.RawSlot
 
 /** Maps template-specific Raid-Helper `(className, specName)` pairs onto canonical
-  * `(PlayerClass, Spec)`. Unknown pairs are collected as errors so missing rows surface immediately.
+  * `(PlayerClass, Spec)`. Unknown pairs are collected as errors so missing rows surface
+  * immediately.
   *
   * Two quirks drive the logic:
   *   - `className == "Tank"` collapses the real class into the spec (e.g. `Guardian` ⇒ Druid).
@@ -27,23 +28,27 @@ object RosterNormalizer:
     "dk" -> PlayerClass.DeathKnight
   )
 
-  /** Spec-label aliases (post digit-strip) for Raid-Helper names that differ from canonical codes. */
+  /** Spec-label aliases (post digit-strip) for Raid-Helper names that differ from canonical codes.
+    */
   private val specAliases: Map[String, Spec] = Map(
-    "smite"        -> Spec.Discipline, // VERIFY: Raid-Helper's Disc-priest label
+    "smite"         -> Spec.Discipline, // VERIFY: Raid-Helper's Disc-priest label
     "beast mastery" -> Spec.BeastMastery
   )
 
-  /** Resolve a single raw `(className, specName)` to canonical class/spec, or a descriptive error. */
+  /** Resolve a single raw `(className, specName)` to canonical class/spec, or a descriptive error.
+    */
   def normalizeSlot(className: String, specName: String): Either[String, (PlayerClass, Spec)] =
     val cn = className.trim.toLowerCase
     val sn = specName.trim.toLowerCase
     if cn == "tank" then
-      tankOverrides.get(sn).toRight(s"Unknown tank spec: className='$className' specName='$specName'")
+      tankOverrides.get(
+        sn
+      ).toRight(s"Unknown tank spec: className='$className' specName='$specName'")
     else
       for
         cls  <- resolveClass(cn).toRight(s"Unknown class: className='$className'")
         spec <- resolveSpec(sn).toRight(s"Unknown spec: specName='$specName'")
-        _ <- Either.cond(
+        _    <- Either.cond(
           cls.specs.contains(spec),
           (),
           s"Spec '${spec.code}' is not valid for ${cls.code} (className='$className' specName='$specName')"
@@ -60,7 +65,8 @@ object RosterNormalizer:
   private def stripTrailingDigits(s: String): String =
     s.reverse.dropWhile(_.isDigit).reverse
 
-  /** Normalize a whole raidplan, collecting every unresolved slot rather than failing on the first. */
+  /** Normalize a whole raidplan, collecting every unresolved slot rather than failing on the first.
+    */
   def normalize(slots: List[RawSlot]): Either[List[String], List[RaidMember]] =
     val results = slots.map { s =>
       normalizeSlot(s.className, s.specName).map { (cls, spec) =>

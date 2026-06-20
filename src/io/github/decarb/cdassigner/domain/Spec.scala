@@ -1,7 +1,8 @@
 package io.github.decarb.cdassigner.domain
 
 /** All specs across MoP classes. Names that collide across classes (Frost, Holy, Protection,
-  * Restoration) share a single case; the owning [[PlayerClass]] disambiguates via [[PlayerClass.specs]].
+  * Restoration) share a single case; the owning [[PlayerClass]] disambiguates via
+  * [[PlayerClass.specs]].
   */
 enum Spec(val code: String):
   case Blood         extends Spec("blood")

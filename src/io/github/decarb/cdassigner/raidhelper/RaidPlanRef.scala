@@ -7,4 +7,7 @@ object RaidPlanRef:
     val noQuery = input.trim.takeWhile(c => c != '?' && c != '#')
     val lastSeg = noQuery.split("/").filter(_.nonEmpty).lastOption.getOrElse("")
     if lastSeg.nonEmpty && lastSeg.forall(_.isDigit) then Right(lastSeg)
-    else Left(s"Could not extract a raidplan id from '$input' (expected a numeric id or a raid-helper URL)")
+    else
+      Left(
+        s"Could not extract a raidplan id from '$input' (expected a numeric id or a raid-helper URL)"
+      )

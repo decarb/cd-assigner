@@ -30,6 +30,7 @@ and explaining, **not** doing the assignment.
 ## Build / run
 - `scala-cli compile .` · `scala-cli test .`
 - `scala-cli run . -- pull <raidplan-url-or-id> [-o out.json]` — fetch + normalize a roster to JSON.
+- Format: `scala-cli fmt .` · Lint: `scala-cli fix --power .` (configs `.scalafmt.conf`, `.scalafix.conf`).
 
 ## Repo
 - `git@github.com:decarb/cd-assigner.git` (branch `master`). Commit/push only when asked; conventional

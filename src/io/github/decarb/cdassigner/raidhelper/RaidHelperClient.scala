@@ -17,7 +17,8 @@ final case class RaidHelperClient(backend: Backend[IO]):
         if resp.code.isSuccess then
           IO.fromEither(parser.parse(resp.body).flatMap(_.hcursor.get[List[RawSlot]]("slots")))
         else
-          val reason = parser.parse(resp.body).flatMap(_.hcursor.get[String]("reason")).getOrElse(resp.body)
+          val reason =
+            parser.parse(resp.body).flatMap(_.hcursor.get[String]("reason")).getOrElse(resp.body)
           IO.raiseError(
             new RuntimeException(
               s"Raid-Helper has no raidplan for id $id (HTTP ${resp.code}: $reason). " +
