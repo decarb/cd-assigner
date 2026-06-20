@@ -1,0 +1,21 @@
+# Secrets — never commit
+.env
+*.env
+!.env.example
+
+# scala-cli / build artifacts
+.scala-build/
+.bsp/
+.metals/
+.bloop/
+
+# Editor / tool local settings
+.claude/settings.local.json
+.vscode/
+
+# Generated roster output
+roster-*.json
+
+# Caches
+.cache/
+*.cache
