@@ -30,6 +30,7 @@ and explaining, **not** doing the assignment.
 ## Build / run
 - `scala-cli compile .` · `scala-cli test .`
 - `scala-cli run . -- pull <raidplan-url-or-id> [-o out.json]` — fetch + normalize a roster to JSON.
+- `scala-cli run . -- supply --roster <roster.json> --kill-time <s|m:ss>` — supply ledger (raid CDs + charges).
 - Format: `scala-cli fmt .` · Lint: `scala-cli fix --power .` (configs `.scalafmt.conf`, `.scalafix.conf`).
 
 ## Repo

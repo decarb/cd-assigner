@@ -1,6 +1,7 @@
 # Handover — CD Assigner (WoW MoP Cooldown Assignment Tool)
 
-_Last updated: 2026-06-20. Status: **roster `pull` built, verified live (25-person roster), committed & pushed.**_
+_Last updated: 2026-06-22. Status: **roster `pull` + SUPPLY ledger (`supply`) built & tested, cooldown
+KB audited against wowhead mop-classic; supply not yet committed. `pull` committed & pushed.**_
 
 > **Rescoped (2026-06-20):** the first phase is **only** the roster `pull` stage (Raid-Helper →
 > canonical domain model → JSON on disk). WCL logs + the assign engine are deferred. The (working,
@@ -90,13 +91,19 @@ The demand side is built from **both** sources, which are complementary:
 1. ~~WCL auth test → confirms credentials + connection.~~ **DONE (2026-06-20).**
 2. ~~Roster ingest + normalization (Raid-Helper → canonical class/spec).~~ **DONE (2026-06-20),
    committed `91e57b8`, pushed.**
-3. **SUPPLY side (NEXT).** Cooldown KB → typed Scala data (`domain/Cooldown.scala` + a `CooldownKb`
-   table from `research/cooldown-kb.md`), keyed by class / spec / class-wide, with the coverage-type
-   taxonomy. Handle spec-dependent cases (e.g. Tranquility 180s Resto vs 480s off-spec). Then compute
-   `charges(ability, T) = floor(T/recharge)+1` aggregated per coverage type from the pulled roster +
-   a kill-time `T`. New `supply --roster roster.json --kill-time <T>` CLI command. Deterministic, no
-   WCL. First *analytical* output: "every raid CD your comp brings and how many times each fires."
-4. **DEMAND side.** Encounter model per boss = BigWigs skeleton + WCL calibration (see section above).
+3. ~~**SUPPLY side.** Cooldown KB → typed Scala + `supply` CLI command.~~ **DONE (2026-06-20).**
+   `domain/CoverageType.scala` (6-type taxonomy enum), `domain/Cooldown.scala` (`Cooldown` +
+   `CooldownSource` = `AnySpec(class)` | `Specs(class, specs)`; `charges(T)=T/recharge+1`),
+   `supply/CooldownKb.scala` (full KB table; Tranquility split into Resto 180 / off-spec 480 via
+   disjoint spec sets), `supply/SupplyLedger.scala` (compute + `chargesByType`), `SupplyReport.scala`
+   (text report), `supply/KillTime.scala` (parses `390` or `6:30`). CLI: `supply --roster <f>
+   --kill-time <s|m:ss>`. Deterministic, no WCL. 6 tests in `SupplyTest`. **KB audited spell-by-spell
+   against wowhead `mop-classic` (2026-06-22)** — see the Verification table in `research/cooldown-kb.md`.
+   Corrections: Devotion Aura is **Holy `dr_all` + Ret/Prot `dr_magic`** (was Holy-only `dr_magic`),
+   Hand of Sacrifice 150→120s, Light's Hammer 16→14s, + minor duration/magnitude fixes. Verified on
+   the live 25-person roster (16 bring a CD): 43 aoe_heal / 8 dr_magic / 24 dr_all / 22 external
+   charges over a 6:30 kill. ⚠️ Still **uncommitted** — commit before next session.
+4. **DEMAND side (NEXT).** Encounter model per boss = BigWigs skeleton + WCL calibration (see section above).
    Un-stash WCL here. Start with **one boss** authored end-to-end.
 5. **L0 supply/demand ledger.** Combine 3 + 4 → coverage gap analysis ("magic DR: need 6, have 4,
    short 2"). First genuinely useful end-to-end output; validates the model before any placement.
@@ -108,8 +115,12 @@ The demand side is built from **both** sources, which are complementary:
 - MoP **Classic** SoO zone/encounter IDs on WCL (Classic is its own game version). Needed for §4.
 - Which **difficulty** the guild raids (LFR/Flex/Normal/Heroic) — coverage differs.
 - A reference SoO log URL from the guild's difficulty/comp for calibration (§4).
-- Verify a few cooldown KB values for 5.4.8 (e.g. Spirit Link CD, AMZ duration) against wowhead
-  mop-classic before they feed the supply numbers (§3).
+- ~~Verify cooldown KB values for 5.4.8 against wowhead mop-classic (§3).~~ **DONE (2026-06-22)** —
+  full spell-by-spell audit, see Verification table in `research/cooldown-kb.md`.
+- **Talent/glyph-conditional supply (deferred):** the roster has no talent data (Raid-Helper =
+  class/spec only), so talent-dependent CDs aren't modelled yet — the KB lists base values only.
+  Examples: Clemency (+1 charge on the Hands), Unbreakable Spirit (halves Hand of Sac to 60s). WCL
+  logs expose per-player talents/glyphs, so the demand stage (§4) is the natural place to resolve them.
 - **Normalization VERIFY:** `Priest "Smite"` → assumed Discipline; `Tank "Protection2"` → assumed Paladin
   (only `Protection1`=Warrior seen in samples). The live 25-person roster had neither — still unconfirmed.
 - Which boss to author first for §4 (Garrosh is the doc's worked example; pick on next session).
@@ -134,8 +145,10 @@ The demand side is built from **both** sources, which are complementary:
     codecs; saved JSON carries `raidPlanId` + `capturedAt` provenance).
   - `raidhelper/` — `RawSlot` (DTO), `RaidPlanRef` (URL-or-id parsing), `RaidHelperClient` (fetch).
   - `roster/` — `RosterNormalizer` (table + error collection), `RosterStore` (JSON file IO).
-  - `Main.scala` — decline-effect CLI: **`pull` only**.
-  - Tests: `RosterNormalizerTest` (normalizes the committed sample offline), `RaidPlanRefTest`.
+  - `supply/` — `CooldownKb` (KB table + `forMember`), `SupplyLedger` (`compute` + `chargesByType` /
+    `contributors`), `SupplyReport` (text render), `KillTime` (parse seconds or m:ss).
+  - `Main.scala` — decline-effect CLI: **`pull`** and **`supply`**.
+  - Tests: `RosterNormalizerTest`, `RaidPlanRefTest`, `SupplyTest` (KB spec-dependency + charges math).
 - **Stashed (out of repo, gitignored sibling dir `/home/claude/cd-assigner-deferred/`):**
   `wcl/WclClient.scala`, `config/Env.scala`, `domain/Encounter.scala` (`Raid`/`Boss` enums, 14 SoO bosses).
 - `.gitignore` covers `.env`, `roster-*.json` (generated), scala-cli build dirs, editor/tool local settings.

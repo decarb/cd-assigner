@@ -8,6 +8,7 @@ import com.monovore.decline.effect.*
 import io.github.decarb.cdassigner.domain.Roster
 import io.github.decarb.cdassigner.raidhelper.{RaidHelperClient, RaidPlanRef}
 import io.github.decarb.cdassigner.roster.{RosterNormalizer, RosterStore}
+import io.github.decarb.cdassigner.supply.{KillTime, SupplyLedger, SupplyReport}
 import java.nio.file.{Path, Paths}
 import sttp.client4.httpclient.cats.HttpClientCatsBackend
 
@@ -55,6 +56,33 @@ extends CommandIOApp(
         }
         program.handleErrorWith(e => Console[IO].errorln(s"✗ ${e.getMessage}").as(ExitCode.Error))
 
+  private val supply: Opts[IO[ExitCode]] =
+    Opts.subcommand(
+      "supply",
+      "Compute the supply ledger (every raid CD a saved roster brings) for a kill time"
+    ) {
+      (
+        Opts.option[Path]("roster", "Saved roster JSON from `pull`", short = "r"),
+        Opts.option[String](
+          "kill-time",
+          "Estimated kill time: seconds (390) or m:ss (6:30)",
+          short = "t"
+        )
+      ).mapN(runSupply)
+    }
+
+  private def runSupply(rosterPath: Path, killTime: String): IO[ExitCode] =
+    KillTime.parse(killTime) match
+      case Left(msg)      => Console[IO].errorln(s"✗ $msg").as(ExitCode.Error)
+      case Right(seconds) =>
+        RosterStore
+          .read(rosterPath)
+          .flatMap { roster =>
+            val ledger = SupplyLedger.compute(roster, seconds)
+            Console[IO].println(SupplyReport.render(ledger)).as(ExitCode.Success)
+          }
+          .handleErrorWith(e => Console[IO].errorln(s"✗ ${e.getMessage}").as(ExitCode.Error))
+
   private def printRosterSummary(roster: Roster): IO[Unit] =
     val byClass = roster.members
       .groupBy(_.playerClass)
@@ -64,4 +92,4 @@ extends CommandIOApp(
       .mkString(", ")
     Console[IO].println(s"  by class: $byClass")
 
-  def main: Opts[IO[ExitCode]] = pull
+  def main: Opts[IO[ExitCode]] = pull.orElse(supply)
