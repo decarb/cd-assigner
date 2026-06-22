@@ -5,14 +5,21 @@ _Supersedes the "hand-authored only" assumption: WCL is now part of the design._
 
 ## Objective
 
-Build the **DEMAND** side of the engine for **one boss authored end-to-end** (Thok the
-Bloodthirsty, **Heroic / 25-player**), then combine it with the existing **SUPPLY** ledger
-into the **L0 supply-vs-demand gap report** — the first genuinely useful end-to-end output.
+**Product end goal (not this session):** given a roster + a per-encounter demand model, output a
+**recommended cooldown schedule** — *which player presses which cooldown at which moment*.
+Supply-vs-demand is the engine's **internal knowledge** that drives that placement; it is **not**
+the output, and the tool does **not** give roster-composition advice ("bring another Disc priest").
+The assignment/schedule (L1) is the **next** session.
 
-**User:** the raid leader, currently progressing Heroic Thok. **Success looks like:** running
-one command on their pulled roster prints, per coverage type, `need N / have M / short K`, so
-they can see *before* the pull whether they are under-covered (e.g. "magic DR on Deafening
-Screech: need 5, have 3, short 2") and what their options are.
+**This session:** build the **DEMAND** side of the engine for **one boss authored end-to-end**
+(Thok the Bloodthirsty, **Heroic / 25-player**) — the typed, timed model of incoming damage the
+assigner will place cooldowns against. Demonstrate it by combining with the existing **SUPPLY**
+ledger into a **feasibility view** (per-type `need / have / short`), which validates the demand
+model end-to-end before placement is built on top of it.
+
+**User:** the raid leader, currently progressing Heroic Thok. **Success looks like:** a correct,
+typed, time-aware demand model for Thok 25H, and a feasibility command that proves DEMAND and
+SUPPLY are comparable — the foundation the schedule assigner consumes next.
 
 **Scope this delivery:**
 - IN: encounter model schema; Thok 25H authored; BigWigs⋈WCL damage-event categorisation;

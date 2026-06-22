@@ -4,9 +4,13 @@ _Phase 2 of the spec-driven workflow. Spec: `demand-model-spec.md`. Status: **DR
 
 ## Overview
 
-Build the DEMAND side for Thok 25H and combine it with the existing SUPPLY ledger into the L0
-gap report. The categorisation of damage events is **derived from WCL** (joined to BigWigs
-spellIds), not hand-authored — honoring the "WCL in the design" decision.
+Build the DEMAND side for Thok 25H — the typed, timed model of incoming damage that the **next**
+session's schedule assigner (L1) will place cooldowns against. This session demonstrates the model
+by combining it with the existing SUPPLY ledger into a **feasibility view** (`need/have/short`),
+validating that DEMAND and SUPPLY are comparable before placement is built on it. The feasibility
+view is a byproduct, **not** the product (which is the cooldown schedule) and **not** roster advice.
+The categorisation of damage events is **derived from WCL** (joined to BigWigs spellIds), not
+hand-authored — honoring the "WCL in the design" decision.
 
 ## Architecture Decisions
 

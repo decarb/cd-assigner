@@ -1,13 +1,22 @@
 # Handover — CD Assigner (WoW MoP Cooldown Assignment Tool)
 
-_Last updated: 2026-06-22. Status: **roster `pull` + SUPPLY ledger (`supply`) built & tested, cooldown
-KB audited against wowhead mop-classic; supply not yet committed. `pull` committed & pushed.**_
+_Last updated: 2026-06-22. Status: **`pull` + SUPPLY ledger (`supply`) built, tested, committed &
+pushed (origin `d9e68cb`). DEMAND model spec'd + planned (Thok 25H Heroic); implementation not yet
+started.**_
 
-> **Rescoped (2026-06-20):** the first phase is **only** the roster `pull` stage (Raid-Helper →
-> canonical domain model → JSON on disk). WCL logs + the assign engine are deferred. The (working,
-> tested) WCL auth code + `Encounter` enums are stashed at `/home/claude/cd-assigner-deferred/`.
-> Raid-Helper note: raidplan URLs use the 19-digit **event** id (e.g.
-> `raid-helper.xyz/raidplan/<id>`); a 404 `"unknown comp"` means no event/finalized comp for that id.
+> **Product goal (clarified 2026-06-22):** the output is a **recommended cooldown schedule** — which
+> player presses which CD at which moment — driven by the engine's internal supply-vs-demand
+> knowledge. Supply/demand is **not** the output, and the tool gives **no** roster-composition advice.
+>
+> **Current phase (2026-06-22):** building the **DEMAND** side for one boss (Thok the Bloodthirsty,
+> **Heroic 25**). WCL is now **in-design** (being un-stashed) — BigWigs spellIds ⋈ WCL `DamageTaken`
+> categorise **raidwide** damage events (externals out of scope). Spec: `research/demand-model-spec.md`;
+> 9-task plan: `research/demand-model-plan.md`. The schedule/assigner (L1) is the **next** session.
+>
+> **Earlier rescope (2026-06-20):** phase 1 was roster `pull` only; the (working, tested) WCL auth
+> code + `Encounter` enums were stashed at `/home/claude/cd-assigner-deferred/` (being un-stashed now
+> per the plan). Raid-Helper note: raidplan URLs use the 19-digit **event** id (e.g.
+> `raid-helper.xyz/raidplan/<id>`); a 404 `"unknown comp"` means no finalized comp for that id.
 
 ## What this project is
 
@@ -102,9 +111,11 @@ The demand side is built from **both** sources, which are complementary:
    Corrections: Devotion Aura is **Holy `dr_all` + Ret/Prot `dr_magic`** (was Holy-only `dr_magic`),
    Hand of Sacrifice 150→120s, Light's Hammer 16→14s, + minor duration/magnitude fixes. Verified on
    the live 25-person roster (16 bring a CD): 43 aoe_heal / 8 dr_magic / 24 dr_all / 22 external
-   charges over a 6:30 kill. ⚠️ Still **uncommitted** — commit before next session.
-4. **DEMAND side (NEXT).** Encounter model per boss = BigWigs skeleton + WCL calibration (see section above).
-   Un-stash WCL here. Start with **one boss** authored end-to-end.
+   charges over a 6:30 kill. **Committed `1402dda`, pushed.**
+4. **DEMAND side (IN PROGRESS).** Spec'd + planned: **Thok the Bloodthirsty, Heroic 25**, encounter
+   model = BigWigs skeleton ⋈ WCL calibration, raidwide events only. See `research/demand-model-spec.md`
+   + `research/demand-model-plan.md` (9 tasks, T1–T9). Verified WCL Classic IDs: SoO zone `1054`,
+   Thok 25H encounter `51599`. Un-stash WCL during T3.
 5. **L0 supply/demand ledger.** Combine 3 + 4 → coverage gap analysis ("magic DR: need 6, have 4,
    short 2"). First genuinely useful end-to-end output; validates the model before any placement.
 6. **L1 greedy assigner.** The actual assignments — prefer per-phase rotation order (robust to
@@ -112,9 +123,12 @@ The demand side is built from **both** sources, which are complementary:
 7. **L2 CP-SAT** only if L1 quality demands; **AI bootstrapping** (encounter drafts) + NL preferences last.
 
 ## Open questions / to-confirm
-- MoP **Classic** SoO zone/encounter IDs on WCL (Classic is its own game version). Needed for §4.
-- Which **difficulty** the guild raids (LFR/Flex/Normal/Heroic) — coverage differs.
-- A reference SoO log URL from the guild's difficulty/comp for calibration (§4).
+- ~~MoP Classic SoO zone/encounter IDs on WCL.~~ **RESOLVED (2026-06-22):** SoO zone `1054`, Thok
+  25H encounter `51599` (BigWigs `engageId` + Classic `5` prefix).
+- ~~Which difficulty the guild raids.~~ **RESOLVED:** **Heroic** (25-player).
+- ~~A reference SoO log URL for calibration.~~ **RESOLVED:** self-served via the API —
+  `encounter(51599).characterRankings` yields a top public 25H report + damage tables.
+- **Raidwide breadth threshold** (proposed ≥ 60% = 15/25) — tune against the real log in T5.
 - ~~Verify cooldown KB values for 5.4.8 against wowhead mop-classic (§3).~~ **DONE (2026-06-22)** —
   full spell-by-spell audit, see Verification table in `research/cooldown-kb.md`.
 - **Talent/glyph-conditional supply (deferred):** the roster has no talent data (Raid-Helper =
@@ -123,15 +137,18 @@ The demand side is built from **both** sources, which are complementary:
   logs expose per-player talents/glyphs, so the demand stage (§4) is the natural place to resolve them.
 - **Normalization VERIFY:** `Priest "Smite"` → assumed Discipline; `Tank "Protection2"` → assumed Paladin
   (only `Protection1`=Warrior seen in samples). The live 25-person roster had neither — still unconfirmed.
-- Which boss to author first for §4 (Garrosh is the doc's worked example; pick on next session).
+- ~~Which boss to author first.~~ **RESOLVED:** **Thok the Bloodthirsty** (current guild progression).
+- **Blood Frenzy (Thok P2) typing:** `dr_physical` demand vs pure `aoe_heal` throughput — resolve in T5.
 
 ## Research artifacts (all in `research/`)
-- `feasibility-assessment.md` — overall feasibility, all components.
 - `engine-design.md` — the suggestion engine (the crux). **Read this first.**
+- `demand-model-spec.md` — DEMAND side + feasibility spec for Thok 25H (current phase). **Read second.**
+- `demand-model-plan.md` — 9-task implementation plan (T1–T9) for the current phase.
+- `feasibility-assessment.md` — overall feasibility, all components.
 - `logs-pipeline.md` — Warcraft Logs-driven coverage model.
-- `cooldown-kb.md` — starter MoP raid cooldown knowledge base (source for §3).
+- `cooldown-kb.md` — MoP raid cooldown KB (SUPPLY source; audited 2026-06-22).
 - `raidhelper-raidplan-sample.json`, `raidhelper-event-sample.json` — real API responses.
-- `bigwigs/*.lua` — sample boss modules.
+- `bigwigs/*.lua` — sample boss modules (`GarroshHellscream`, `IronJuggernaut`, **`Thok`** = current target).
 
 ## Tech notes
 - **Stack: Scala 3 / scala-cli** (script-first), conventions mirror `~/scala-cli/ranking-table`:
